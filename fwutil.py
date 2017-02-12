@@ -77,8 +77,9 @@ def usage():
     print("   unpack - unpacks an upgrade binary into a raw binary")
 
 # If our args are wrong, print the usage.
-if len(sys.argv) != 3:
+if len(sys.argv) != 4:
     usage()
+    sys.exit(0)
 
 # Handle the relevant command.
 if sys.argv[1] == "pack":
