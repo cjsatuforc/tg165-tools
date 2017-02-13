@@ -20,6 +20,7 @@
 all: Upgrade.bin
 
 BINARY = extractor
+OBJS = ringbuf.o
 
 include ../Makefile.include
 
