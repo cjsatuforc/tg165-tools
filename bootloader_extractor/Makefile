@@ -24,8 +24,8 @@ OBJS = ringbuf.o
 
 include ../Makefile.include
 
-Upgrade.bin: cdcacm.bin
+Upgrade.bin: extractor.bin
 	~/Projects/tg165-tools/fwutil.py pack extractor.bin Upgrade.bin
 
-cdcacm.bin: cdcacm.elf
+cdcacm.bin: extractor.elf
 	arm-none-eabi-objcopy -O binary extractor.elf extractor.bin
