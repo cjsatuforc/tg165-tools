@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Quick, hackish scripts to FLIR firmware images with custom functionality
+# Quick, hackish scripts to extend FLIR firmware images with custom functionality
 #
 
 import io
@@ -30,7 +30,8 @@ PAD_SIZE = 2
 #SHELLCODE_LOCATION = 0x8C30
 SHELLCODE_LOCATION = 0x36B4
 
-ALT_FW_LOCATION = 0x40000
+SELECTOR_LOCATION = 0x40000
+ALT_FW_LOCATION   = 0x40800
 
 
 def read_file(filename):
@@ -42,11 +43,11 @@ def write_file(filename, data):
         return f.write(data)
 
 
-def extend_with_fw(base, new_fw):
+def extend_with_fw(base, new_fw, location):
 
     # Extend the firmware out, filling any unused space between the
     # base image and the new firmware.
-    total_padding = ALT_FW_LOCATION - len(base)
+    total_padding = location - len(base)
     padded = base + (b'\xFF' * total_padding)
 
     return padded + new_fw
@@ -113,12 +114,13 @@ def pack(bytes_in):
 
 
 def usage():
-    print("usage: {} <Upgrade.bin> <shellcode> <additional_firmware> <output>".format(sys.argv[0]))
+    print("usage: {} <Upgrade.bin> <bootsel_firmware> <additional_firmware> <output>".format(sys.argv[0]))
 
 
-def patch(unpatched):
+def patch_vector_table_to_launch_fw(unpatched, additional_fw):
     unpatched = bytearray(unpatched)
-    unpatched[SHELLCODE_LOCATION:SHELLCODE_LOCATION + len(SHELLCODE)] = SHELLCODE
+    additional_fw = bytearray(additional_fw)
+    unpatched[0:8] = additional_fw[0:8]
     return bytes(unpatched)
 
 
@@ -134,14 +136,16 @@ SHELLCODE = read_file(sys.argv[2])
 packed_orig = read_file(sys.argv[1])
 original = unpack(packed_orig)
 
-# Apply our patch...
-patched = patch(original)
-assert len(patched) == len(original)
+# Extend the image with the "boot selector" firmware.
+selector = read_file(sys.argv[2])
+extended = extend_with_fw(original, selector, SELECTOR_LOCATION)
 
-# TODO: add in our additional binary
+# Extend the image with our target firmware.
 additional_fw = read_file(sys.argv[3])
-patched = extend_with_fw(patched, additional_fw)
-assert len(patched) > ALT_FW_LOCATION
+extended = extend_with_fw(extended, additional_fw, ALT_FW_LOCATION)
+
+# Patch the file's vector table to launch the additional firmware.
+patched = patch_vector_table_to_launch_fw(extended, selector)
 
 # Finally, output our patched file.
 packed_patched = pack(patched)
