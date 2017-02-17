@@ -11,27 +11,9 @@ PAGE_SIZE = 1024
 CRC_SIZE = 2
 PAD_SIZE = 2
 
-
-# Shellcode to load our alternate firmware.:
-#   0:	4c04      	ldr	r4, [pc, #16]	; (14 <_start+0x14>)
-#   2:	4d05      	ldr	r5, [pc, #20]	; (18 <_start+0x18>)
-#   4:	602c      	str	r4, [r5, #0]
-#   6:	4c03      	ldr	r4, [pc, #12]	; (14 <_start+0x14>)
-#   8:	4d04      	ldr	r5, [pc, #16]	; (1c <_start+0x1c>)
-#   a:	6820      	ldr	r0, [r4, #0]
-#   c:	6829      	ldr	r1, [r5, #0]
-#   e:	4685      	mov	sp, r0
-#  10:	468f      	mov	pc, r1
-#  12:	0000      	.short	0x0000
-#  14:	00804000 	.word	0x00804000
-#  18:	e000ed14 	.word	0xe000ed14
-#  1c:	00804004 	.word	0x00804004
-
-#SHELLCODE_LOCATION = 0x8C30
-SHELLCODE_LOCATION = 0x36B4
-
-SELECTOR_LOCATION = 0x40000
-ALT_FW_LOCATION   = 0x40800
+SELECTOR_LOCATION_ABSOLUTE = b"\x01\x00\x05\x08"
+SELECTOR_LOCATION_RELATIVE = 0x40000
+ALT_FW_LOCATION_RELATIVE   = 0x44000
 
 
 def read_file(filename):
@@ -117,10 +99,9 @@ def usage():
     print("usage: {} <Upgrade.bin> <bootsel_firmware> <additional_firmware> <output>".format(sys.argv[0]))
 
 
-def patch_vector_table_to_launch_fw(unpatched, additional_fw):
+def patch_vector_table_to_launch_fw(unpatched, new_entry_point):
     unpatched = bytearray(unpatched)
-    additional_fw = bytearray(additional_fw)
-    unpatched[0:8] = additional_fw[0:8]
+    unpatched[4:8] = new_entry_point
     return bytes(unpatched)
 
 
@@ -138,14 +119,14 @@ original = unpack(packed_orig)
 
 # Extend the image with the "boot selector" firmware.
 selector = read_file(sys.argv[2])
-extended = extend_with_fw(original, selector, SELECTOR_LOCATION)
+extended = extend_with_fw(original, selector, SELECTOR_LOCATION_RELATIVE)
 
 # Extend the image with our target firmware.
 additional_fw = read_file(sys.argv[3])
-extended = extend_with_fw(extended, additional_fw, ALT_FW_LOCATION)
+extended = extend_with_fw(extended, additional_fw, ALT_FW_LOCATION_RELATIVE)
 
 # Patch the file's vector table to launch the additional firmware.
-patched = patch_vector_table_to_launch_fw(extended, selector)
+patched = patch_vector_table_to_launch_fw(extended, SELECTOR_LOCATION_ABSOLUTE)
 
 # Finally, output our patched file.
 packed_patched = pack(patched)

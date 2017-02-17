@@ -1,30 +1,23 @@
-##
-## This file is part of the libopencm3 project.
-##
-## Copyright (C) 2009 Uwe Hermann <uwe@hermann-uwe.de>
-##
-## This library is free software: you can redistribute it and/or modify
-## it under the terms of the GNU Lesser General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## This library is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU Lesser General Public License for more details.
-##
-## You should have received a copy of the GNU Lesser General Public License
-## along with this library.  If not, see <http://www.gnu.org/licenses/>.
-##
 
-all: Upgrade.bin
 
-BINARY = bootsel
+CROSS_COMPILE ?= arm-none-eabi-
+CC            := $(CROSS_COMPILE)gcc
 
-include ../Makefile.include
+BINARY        := bootsel
+LINKER_FILE   := bootsel.ld
+CFLAGS        := -mcpu=cortex-m3 -mthumb -nostartfiles -ffreestanding -T $(LINKER_FILE)
 
-Upgrade.bin: bootsel.bin
-	~/Projects/tg165-tools/fwutil.py pack bootsel.bin Upgrade.bin
 
-cdcacm.bin: bootsel.elf
-	arm-none-eabi-objcopy -O binary bootsel.elf bootsel.bin
+all: $(BINARY).bin
+
+.PHONY: clean
+.SECONDARY: $(BINARY).elf
+
+%.elf: %.S
+	$(CC) $(CFLAGS) $< -o $@
+
+%.bin: %.elf
+	arm-none-eabi-objcopy -O binary $< $@
+
+clean:
+	rm -f *.elf *.bin
