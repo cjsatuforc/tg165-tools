@@ -16,15 +16,20 @@ class FirmwareFile(object):
     UPGRADE_BIN_DATA_SIZE = 1024
     UPGRADE_BIN_SIZE_WITH_METADATA = 1028
 
-    def __init__(self, raw_bytes=None, load_address=0x08010000):
+    # By default, TG165 programs start at 0x08010000; right past the bootloader.
+    DEFAULT_LOAD_ADDRESS = 0x08010000
+
+
+    def __init__(self, raw_bytes=None, load_address=DEFAULT_LOAD_ADDRESS):
         """
         Sets up a new firmware file.
 
         raw_bytes: A bytearray containing the raw contents of this
-            firmware file. If not provided, an empty file will be created.
+            firmware file, a collection of bytes, an object that supports read(),
+            a filename to be read into this object. If not provied, an empty
+
         load_address: The address at which this firmware file is expected
-            to be loaded. If you're using the Upgrade.bin mechanism, your
-            load address is almost definitely 0x08010000.
+            to be loaded.
         """
 
         if raw_bytes is None:
@@ -39,7 +44,7 @@ class FirmwareFile(object):
         """
         Convenience function that accepts a 'polymorphic'
         object (which can be any object that supports read,
-        a string filename, or a collection of bytes.
+        a string filename, or a collection of bytes).
         """
 
         if isinstance(file_or_bytes, bytes):
@@ -235,6 +240,3 @@ class FirmwareFile(object):
 
         if close_needed:
             target.close()
-
-
-
