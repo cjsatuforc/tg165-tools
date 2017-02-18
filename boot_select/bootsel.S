@@ -19,7 +19,7 @@
 
 // The vector tables for any alternate firmwares we may want to load.
 #define ALT_BOOTLOADER_VECTOR_TABLE  0x08050100
-#define ALT_FW_VECTOR_TABLE          0x08054000
+#define ALT_FW_VECTOR_TABLE          0x08053000
 
 // The base address of the port that houses our buttons.
 // All of the buttons we're interested in are on PORTC.
@@ -67,7 +67,6 @@ run_alt_bootloader:
 // Does not return.
 run_alt_firmware:
     ldr r5, =ALT_FW_VECTOR_TABLE
-    ldr r0, =boot_from_vector_table
     b boot_from_vector_table
 
 
@@ -84,7 +83,6 @@ boot_from_vector_table:
 
     // Apply the new stack pointer, and jump to the relevant
     // program.
-    //msr msp, r1
     mov sp, r1
     bx r0
 

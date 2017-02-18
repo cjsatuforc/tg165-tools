@@ -17,15 +17,12 @@
 ## along with this library.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-all: Upgrade.bin
+all: extractor.bin
 
 BINARY = extractor
 OBJS = ringbuf.o
 
 include ../Makefile.include
 
-Upgrade.bin: extractor.bin
-	~/Projects/tg165-tools/fwutil.py pack extractor.bin Upgrade.bin
-
-cdcacm.bin: extractor.elf
+extractor.bin: extractor.elf
 	arm-none-eabi-objcopy -O binary extractor.elf extractor.bin

@@ -20,5 +20,8 @@
 BINARY = usbdfu
 CSTD = -std=gnu99
 
+$(BINARY).bin: $(BINARY).elf
+	arm-none-eabi-objcopy -O binary $< $@
+
 include ../Makefile.include
 

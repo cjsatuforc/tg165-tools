@@ -29,9 +29,6 @@
 // Units are arbitrary, but higher is longer. :)
 #define LONG_PRESS_DURATION (0x10000)
 
-/* 'Alternate' applications reside after our alternate bootloader */
-#define APP_ADDRESS 0x08054000
-
 /* Commands sent with wBlockNum == 0 as per ST implementation. */
 #define CMD_SETADDR 0x21
 #define CMD_ERASE   0x41
@@ -115,8 +112,7 @@ static const char *usb_strings[] = {
     "DFU Bootloader",
     "ABCD",
     /* This string is used by ST Microelectronics' DfuSe utility. */
-    /* TODO: tune */
-    "@Internal Flash   /0x08000000/8*001Ka,56*001Kg",
+    "@Internal Flash   /0x08050000/12*001Ka,128*001Kg",
 };
 
 static uint8_t usbdfu_getstatus(uint32_t *bwPollTimeout)
@@ -162,8 +158,7 @@ static void usbdfu_getstatus_complete(usbd_device *usbd_dev, struct usb_setup_da
                        dfu_function.wTransferSize);
             for (i = 0; i < prog.len; i += 2) {
                 uint16_t *dat = (uint16_t *)(prog.buf + i);
-                flash_program_half_word(baseaddr + i,
-                        *dat);
+                flash_program_half_word(baseaddr + i, *dat);
             }
         }
         flash_lock();
@@ -250,10 +245,6 @@ static void setup_gpio(void)
 {
     // Enable the clocks for every GPIO port, as we'll use them all during
     // readback. Don't set up any GPIO beyond that.
-    rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_GPIOB);
-    rcc_periph_clock_enable(RCC_GPIOC);
-    rcc_periph_clock_enable(RCC_GPIOD);
     rcc_periph_clock_enable(RCC_GPIOE);
 
     /// Start with the USB pull-up disabled, so we don't trigger a connection until we're ready.
@@ -299,9 +290,7 @@ int main(void)
     AFIO_MAPR |= AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON;
 
     // Start up our USB device controller...
-    rcc_periph_clock_enable(RCC_OTGFS);
-
-    usbd_dev = usbd_init(&stm32f107_usb_driver, &dev, &config, usb_strings, 4, usbd_control_buffer, sizeof(usbd_control_buffer));
+    usbd_dev = usbd_init(&st_usbfs_v1_usb_driver, &dev, &config, usb_strings, 4, usbd_control_buffer, sizeof(usbd_control_buffer));
     usbd_register_set_config_callback(usbd_dev, usbdfu_set_config);
 
     // Waiting a moment seems to prevent itermittent enumeration issues.
