@@ -61,15 +61,14 @@ _start:
 // Does not return.
 run_alt_bootloader:
     ldr r5, =ALT_BOOTLOADER_VECTOR_TABLE
-    ldr r0, =boot_from_vector_table
-    bx r0
+    b boot_from_vector_table
 
 // Run the alternate firmware.
 // Does not return.
 run_alt_firmware:
     ldr r5, =ALT_FW_VECTOR_TABLE
     ldr r0, =boot_from_vector_table
-    bx r0
+    b boot_from_vector_table
 
 
 // arguments:
