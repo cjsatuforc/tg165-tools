@@ -33,7 +33,12 @@ input:
   load_address: 0x08050000
   format: binary
 
+
   # Subsequent entries start with another '-'. You can have as many as you'd like.
+- filename: alt_bootloader/usbdfu.bin
+  load_address: 0x08050100
+  format: binary
+
 - filename: bootloader_extractor/extractor.bin
   format: binary
   load_address: 0x08054000

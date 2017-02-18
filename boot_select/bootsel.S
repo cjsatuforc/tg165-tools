@@ -18,7 +18,7 @@
 #define MAIN_FW_ENTRY_POINT          0x080136b5
 
 // The vector tables for any alternate firmwares we may want to load.
-#define ALT_BOOTLOADER_VECTOR_TABLE  0x08051000
+#define ALT_BOOTLOADER_VECTOR_TABLE  0x08050100
 #define ALT_FW_VECTOR_TABLE          0x08054000
 
 // The base address of the port that houses our buttons.
@@ -43,7 +43,7 @@ _start:
     // In this case, we'll jump to the alternate bootloader.
     ldr r5, =BOOTLOADER_BUTTON_MASK
     bl buttons_match_mask
-    //cbnz r0, run_alt_bootloader
+    cbnz r0, run_alt_bootloader
 
     // Check to see if just OK is pressed.
     // In this case, we'll jump to the alternate firmware.
