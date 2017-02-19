@@ -28,7 +28,7 @@ The FLIR TG165 is an relatively inepensive, low-resolution thermal camera built 
 
 Any "hardware hacking" project always comes with a risk to your hardware-- but this project should be pretty safe. The main risk comes from putting untested user software on the TG165-- under certain conditions, bad firmware can "freeze" the device. As the device has a soft power button, you could have to wait for the battery to die to get back to the bootloader, which might result in a very boring few hours. It's suggested you set up the STM32F's independent watchdog in your programs to avoid this danger-of-bordedom.
 
-You're also cautioned not to unlock the flash programming registers unless you're willing to solder wires to test points. Fortunately, this is desiged to be difficult to do by acceidnet. If you manage to erase FLIR's bootloader, the path to recovery requires you to either attach via JTAG/SWD or use the rom-resident UART bootloader.
+You're also cautioned not to unlock the flash programming registers unless you're willing to solder wires to test points. Fortunately, this is desiged to be difficult to do by accident. If you manage to erase FLIR's bootloader, the path to recovery requires you to either attach via JTAG/SWD or use the rom-resident UART bootloader.
 
 ## How do I get started?
 
