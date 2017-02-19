@@ -7,7 +7,7 @@ To this end, the repository provides a few hopefully-useful tools:
 * A simple utility (```fwutil.py```) and python module (```tg165```) that can pack and unpack FLIR Upgrade.bin firmware images.
 * A simple utility (```compose-fw.py```) that can be used to build firmware-upgrade files that contain multiple programs.
 * A simple assembly bootstrap (```boot_select```) that allows you to select between multiple programs on device startup.
-* A work-in-progress "alternate-bootloader" (```alt_bootloader```) that allows you to upload custom programs without distruping the main one.
+* A DFU "alternate-bootloader" (```alt_bootloader```) that allows you to upload custom programs via USB without distruping the main one. This should enable rapid development!
 
 And some tools which are probably less useful to most people:
 
@@ -157,9 +157,19 @@ Currently, the boot selector and linker scripts assume the following load addres
 
 (If more space is needed, addresses can be shifted, bitmap images from the main firmware can probably be trounced, and there's a free 20k in the FLIR bootloader region.)
 
-### (Not) Using the Alternate Bootloader
+### Using the Alternate Bootloader
 
-The alternate bootloader isn't quite finished. While it doesn't appear to hurt anything, it also isn't correctly flashing the alternate firmware region at the moment. Hopefully we fix this soon.
+The "alternate bootloader" is a DfuSe-compatible application that allows you to program the TG165's "alternate firmware" over USB using the STM DfuSe Device Firmware Update (DFU) protocol. The alt-bootloader is designed such that it can only program the alternate firmware image, ensuring you won't accidentally erase the bootloader, main program, or itself. It's thus perfect for rapid development!
+
+To enter the alt-bootloader, restart into DFU mode by holding OK, UP, and POWER for a few seconds. Once in the DFU bootloader, you can program the relevant flash sections as you would any other DFU device, e.g. with the [dfu-util utility](http://dfu-util.sourceforge.net/). 
+
+For example, to program an alternate firmware binary linked at ```0x08053000``` using dfu-util, one might execute the following commands:
+
+```sh
+dfu-util -s 0x08053000:leave -D my_binary.bin
+```
+
+The device will automatically restart once programming is complete. If one holds OK while the programming occurs, this restart will automatically load the newly-loaded Alternate Firmware.
 
 ### More Information
 
