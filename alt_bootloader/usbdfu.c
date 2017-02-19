@@ -25,9 +25,25 @@
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/dfu.h>
 
-// Duration for a power-button press to be considered a long press.
-// Units are arbitrary, but higher is longer. :)
+/*
+ * Duration for a power-button press to be considered a long press.
+ * Units are arbitrary, but higher is longer. :)
+ */
 #define LONG_PRESS_DURATION (0x10000)
+
+/*
+ * Memory address at which we should allow writes to begin.
+ * This should match the DFuSe descriptor string below.
+ *
+ * This serves as a sanity check to make sure a bad DFU application
+ * can't inadvertantly make life difficult for people by erasing code
+ * we want to keep. For now, it's fixed to prohibit erasing anything
+ * but the alternate firmware.
+ */
+#define DISALLOW_WRITES_BEFORE (0x08053000)
+
+/* The page size for the TG165's STM32F103VE. */
+#define PAGE_SIZE 2048
 
 /* Commands sent with wBlockNum == 0 as per ST implementation. */
 #define CMD_SETADDR 0x21
@@ -80,9 +96,6 @@ const struct usb_interface_descriptor iface = {
     .bInterfaceClass = 0xFE, /* Device Firmware Upgrade */
     .bInterfaceSubClass = 1,
     .bInterfaceProtocol = 2,
-
-    /* The ST Microelectronics DfuSe application needs this string.
-     * The format isn't documented... */
     .iInterface = 4,
 
     .extra = &dfu_function,
@@ -111,8 +124,12 @@ static const char *usb_strings[] = {
     "Not Exactly FLIR",
     "DFU Bootloader",
     "ABCD",
+
     /* This string is used by ST Microelectronics' DfuSe utility. */
-    "@Internal Flash   /0x08050000/12*001Ka,128*001Kg",
+    /* It encodes the regions of memory, whether DFU should be able to read/
+     * write to them, and their page sizes. Here, we mark most of memory
+     * read-only, but mark the alternate firmware area as programmable */
+    "@Internal Flash   /0x08000000/166*002Ka,90*002Kg",
 };
 
 static uint8_t usbdfu_getstatus(uint32_t *bwPollTimeout)
@@ -145,7 +162,10 @@ static void usbdfu_getstatus_complete(usbd_device *usbd_dev, struct usb_setup_da
             case CMD_ERASE:
                 {
                     uint32_t *dat = (uint32_t *)(prog.buf + 1);
-                    flash_erase_page(*dat);
+
+                    if(*dat >= DISALLOW_WRITES_BEFORE) {
+                        flash_erase_page(*dat);
+                    }
                 }
             case CMD_SETADDR:
                 {
@@ -158,7 +178,10 @@ static void usbdfu_getstatus_complete(usbd_device *usbd_dev, struct usb_setup_da
                        dfu_function.wTransferSize);
             for (i = 0; i < prog.len; i += 2) {
                 uint16_t *dat = (uint16_t *)(prog.buf + i);
-                flash_program_half_word(baseaddr + i, *dat);
+
+                if(baseaddr + i >= DISALLOW_WRITES_BEFORE) {
+                    flash_program_half_word(baseaddr + i, *dat);
+                }
             }
         }
         flash_lock();
