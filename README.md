@@ -180,4 +180,4 @@ More detailed hardware information / documentation can be found [in the Wiki](ht
 Contributions are always welcome. Feel free to open Issues or Pull Requests on GitHub.
 
 Major Contributors:
-* Kyle J. Temkin (@ktemkin)
+* Kate J. Temkin (@ktemkin)
